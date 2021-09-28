@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -33,6 +34,25 @@ func newContext(w http.ResponseWriter, r *http.Request) *Context {
 // SetHeader 设置header
 func (c *Context) SetHeader(key, value string) {
 	c.W.Header().Set(key, value)
+}
+
+// GetHeader 获取header
+func (c *Context) GetHeader() map[string][]string {
+	return c.R.Header
+}
+
+// SetHeaders 将所有request中的headers配置到response的header中
+func (c *Context) SetHeaders(headers map[string][]string) {
+	for k, values := range headers {
+		for _, v := range values {
+			c.SetHeader(k, v)
+		}
+	}
+}
+
+// SetEnvToResponseHeader 获取系统环境变量,并设置到reponse header
+func (c *Context) SetEnvToResponseHeader(key string) {
+	c.SetHeader(key, os.Getenv(key))
 }
 
 // Status 设置返回码

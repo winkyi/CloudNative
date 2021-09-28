@@ -1,10 +1,16 @@
 package engine
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+)
 
 // Index 主页
 func Index(c *Context) {
-	c.HTML(http.StatusOK, "<h1>Hello Gee</h1>")
+	c.SetHeaders(c.R.Header)
+	c.SetEnvToResponseHeader("VERSION")
+	c.HTML(http.StatusOK, "<h1>Hello index</h1>")
+	fmt.Fprintf(c.W, "%q", c.W.Header())
 	c.Log("访问了主页")
 }
 

@@ -6,7 +6,6 @@ import (
 
 func main() {
 	r := engine.New()
-
 	r.GET("/", engine.Index)
 	r.GET("/healthz", engine.Healthz)
 
