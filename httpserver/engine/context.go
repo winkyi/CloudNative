@@ -55,6 +55,17 @@ func (c *Context) SetEnvToResponseHeader(key string) {
 	c.SetHeader(key, os.Getenv(key))
 }
 
+// StringNotCode 返回string格式，不带返回code
+func (c *Context) StringNotCode(format string, values ...interface{}) {
+	c.W.Write([]byte(fmt.Sprintf(format, values...)))
+}
+
+// String 返回string格式，带code
+func (c *Context) String(code int, format string, values ...interface{}) {
+	c.Status(code)
+	c.W.Write([]byte(fmt.Sprintf(format, values...)))
+}
+
 // Status 设置返回码
 func (c *Context) Status(code int) {
 	c.StatusCode = code

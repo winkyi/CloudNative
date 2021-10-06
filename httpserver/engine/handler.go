@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -10,7 +9,7 @@ func Index(c *Context) {
 	c.SetHeaders(c.R.Header)
 	c.SetEnvToResponseHeader("VERSION")
 	c.HTML(http.StatusOK, "<h1>Hello index</h1>")
-	fmt.Fprintf(c.W, "%q", c.W.Header())
+	c.StringNotCode("\n%q", c.W.Header())
 	c.Log("访问了主页")
 }
 
