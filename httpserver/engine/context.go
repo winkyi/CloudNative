@@ -90,5 +90,13 @@ func (c *Context) JSON(code int, obj interface{}) {
 // Log 设置日志格式
 // [127.0.0.1]-200 xxxxx
 func (c *Context) Log(format string, v ...interface{}) {
-	log.Printf("[%s]-%d  %v", strings.Split(c.R.RemoteAddr, ":")[0], c.StatusCode, fmt.Sprintf(format, v...))
+	ipaddr := c.R.RemoteAddr
+	if strings.Contains(ipaddr, "]") {
+		// ipv6格式
+		ipaddr = strings.Split(ipaddr, "]")[0][1:]
+	} else {
+		// ipv4格式
+		ipaddr = strings.Split(c.R.RemoteAddr, ":")[0]
+	}
+	log.Printf("[%s]-%d  %v", ipaddr, c.StatusCode, fmt.Sprintf(format, v...))
 }

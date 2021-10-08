@@ -25,6 +25,8 @@ C:\Users\winkyi>
 
 
 
+
+
 ### 2、读取当前系统的环境变量中的 VERSION 配置，并写入 response header
 
 * 在作业运行结果1中已将VERSION环境变量打印
@@ -71,12 +73,17 @@ C:\Users\winkyi>
 使用curl运行结果
 
 ```powershell
-C:\Users\winkyi>curl -i http://127.0.0.1:9999/healthz
+C:\Users\winkyi>curl -i localhost/healthz
 HTTP/1.1 200 OK
 Content-Type: application/json
-Date: Wed, 06 Oct 2021 12:11:27 GMT
+Date: Fri, 08 Oct 2021 07:57:55 GMT
 Content-Length: 21
 
 {"200":"connect ok"}
 ```
 
+
+
+### 待优化
+
+* httpserver中的几个服务，没有处理关闭的事件
