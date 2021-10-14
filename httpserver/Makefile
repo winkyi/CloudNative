@@ -4,7 +4,7 @@ root:
 
 build-linux:
 	echo "building httpserver binary"
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o deploy/amd64 .
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o deploy/amd64/ .
 
 
 build-windows:
@@ -14,8 +14,8 @@ build-windows:
 
 release: build-linux
 	echo "building httpserver container"
-	docker build -t cncamp/httpserver:${tag} .
+	docker build -t winkyi/httpserver:${tag} .
 
 push: release
 	echo "pushing cncamp/httpserver"
-	docker push cncamp/httpserver:v1.0
+	docker push winkyi/httpserver:${tag}
