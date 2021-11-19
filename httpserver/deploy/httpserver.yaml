@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: winkyi-httpserver
+spec:
+  selector:
+    matchLabels:
+      app: httpserver
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: httpserver
+    spec:
+      containers:
+        - name: httpserver
+          image: winkyi/httpserver:v1.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9999
+              name: app
+            - containerPort: 8001
+              name: pprof
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9999
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            successThreshold: 2
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9999
+            initialDelaySeconds: 10
+            periodSeconds: 5
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: winkyi-httpserver
+spec:
+  selector:
+    app: httpserver
+  ports:
+    - protocol: TCP
+      port: 9999
+      targetPort: 9999
+      name: app
+    - protocol: TCP
+      port: 8001
+      targetPort: 8001
+      name: pprof
