@@ -21,7 +21,7 @@ func (r *router) handle(c *Context) {
 		c.SetEnvToResponseHeader("VERSION")
 		c.HTML(404, "<h1>404 page not found</h1>")
 		c.StringNotCode("\n%q", c.W.Header())
-		c.Log("404 页面不存在")
+		c.Log(3, "404 页面不存在")
 	} else {
 		handler(c)
 	}

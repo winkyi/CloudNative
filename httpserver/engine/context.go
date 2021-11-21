@@ -3,7 +3,7 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"github.com/golang/glog"
 	"net/http"
 	"os"
 	"strings"
@@ -89,7 +89,7 @@ func (c *Context) JSON(code int, obj interface{}) {
 
 // Log 设置日志格式
 // [127.0.0.1]-200 xxxxx
-func (c *Context) Log(format string, v ...interface{}) {
+func (c *Context) Log(level int32, format string, v ...interface{}) {
 	ipaddr := c.R.RemoteAddr
 	if strings.Contains(ipaddr, "]") {
 		// ipv6格式
@@ -98,5 +98,6 @@ func (c *Context) Log(format string, v ...interface{}) {
 		// ipv4格式
 		ipaddr = strings.Split(c.R.RemoteAddr, ":")[0]
 	}
-	log.Printf("[%s]-%d  %v", ipaddr, c.StatusCode, fmt.Sprintf(format, v...))
+	glog.V(glog.Level(level)).Infof("[%s]-%d  %v", ipaddr, c.StatusCode, fmt.Sprintf(format, v...))
+	//log.Printf("[%s]-%d  %v", ipaddr, c.StatusCode, fmt.Sprintf(format, v...))
 }
