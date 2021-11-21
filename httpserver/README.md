@@ -1,89 +1,276 @@
 
 
-## 作业运行结果
+## 模块8 作业-1
 
 
 
-### 1、 接收客户端 request，并将 request 中带的 header 写入 response header
+### 1、优雅启动
 
 
 
-运行httpserver，在windows的cmd客户端中使用curl进行访问，将response header打印出来
+配置就绪探针 readinessProbe
 
-```powershell
-C:\Users\winkyi>curl http://127.0.0.1:9999/
-<h1>Hello index</h1>
-map["Accept":["*/*"] "Content-Type":["text/html"] "User-Agent":["curl/7.55.1"] "Version":["test_httpserver_env"]]
-C:\Users\winkyi>curl http://127.0.0.1:9999/
-<h1>Hello index</h1>
-map["Accept":["*/*"] "Content-Type":["text/html"] "User-Agent":["curl/7.55.1"] "Version":["test_httpserver_env"]]
-C:\Users\winkyi>curl http://127.0.0.1:9999/dedede
-<h1>404 page not found</h1>
-map["Accept":["*/*"] "Content-Type":["text/html"] "User-Agent":["curl/7.55.1"] "Version":["test_httpserver_env"]]
-C:\Users\winkyi>
+```yaml
+... ...
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 9999
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          successThreshold: 2
+... ...
 ```
 
 
 
 
 
-### 2、读取当前系统的环境变量中的 VERSION 配置，并写入 response header
+### 2、优雅终止
 
-* 在作业运行结果1中已将VERSION环境变量打印
 
-* 编写hander_test.go测试模块进行测试，编写httpclient对httpserver进行访问，读取response中的"VERSION"值进行判断
 
-  ```go
-  	if _, ok := respHeaders["Version"]; !ok {
-  		t.Fatal("response header中VERSION不存在")
-  	}
-  ```
+参考孟老师 httpserver写法
 
-  
+```go
+... ...
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-* 单元测试运行结果
+	go func() {
+		glog.V(2).Info("服务启动完成...")
+		if err := app.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			panic(err)
+		}
+	}()
 
-  ```
-  === RUN   TestIndex
-  --- PASS: TestIndex (0.00s)
-  PASS
-  
-  Process finished with exit code 0
-  ```
+	<-done
+	glog.V(2).Info("捕获SIGINT或者SIGTERM信号,服务关闭中...")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer func() {
+		cancel()
+	}()
 
-  
+	if err := app.Shutdown(ctx); err != nil {
+		glog.Fatalf("Server Shutdown Failed:%+v", err)
+	}
+	glog.V(2).Info("服务已优雅关闭...")
+```
 
-### 3、Server 端记录访问日志包括客户端 IP，HTTP 返回码，输出到 server 端的标准输出
 
-标准输出结果
+
+终端1 查询日志，观察服务日志
 
 ```shell
-2021/10/06 20:03:24 [127.0.0.1]-200  访问了主页
-2021/10/06 20:03:27 [127.0.0.1]-200  访问了主页
-2021/10/06 20:03:29 [127.0.0.1]-404  404 页面不存在
-2021/10/06 20:06:50 [127.0.0.1]-404  404 页面不存在
+winkyi@k8s-dev:~/go/src/github.com/winkyi/CloudNative/httpserver/deploy$ kubectl logs -f winkyi-httpserver-69dd4465df-5bcgz 
+I1121 11:19:29.083152       1 main.go:22] 准备启动httpserver...
+I1121 11:19:29.083468       1 main.go:41] 服务启动完成...
+I1121 11:20:20.572018       1 main.go:48] 捕获SIGINT或者SIGTERM信号,服务关闭中...
+I1121 11:20:20.573451       1 main.go:57] 服务已优雅关闭...
 ```
 
 
 
 
 
-### 4、当访问 localhost/healthz 时，应返回200
+终端2 停止pod
 
-使用curl运行结果
-
-```powershell
-C:\Users\winkyi>curl -i localhost/healthz
-HTTP/1.1 200 OK
-Content-Type: application/json
-Date: Fri, 08 Oct 2021 07:57:55 GMT
-Content-Length: 21
-
-{"200":"connect ok"}
+```shell
+winkyi@k8s-dev:~$ kubectl delete pod winkyi-httpserver-69dd4465df-5bcgz
+pod "winkyi-httpserver-69dd4465df-5bcgz" deleted
+winkyi@k8s-dev:~$ 
 ```
 
 
 
-### 待优化
 
-* httpserver中的几个服务，没有处理关闭的事件
+
+
+
+### 3、资源需求和QOS保证
+
+
+
+deployment中配置
+
+```yaml
+... ...
+        resources:
+          limits:
+            memory: "500Mi"
+            cpu: "1"
+          requests:
+            memory: "200Mi"
+            cpu: "200m"
+... ...
+```
+
+
+
+查询QOS
+
+```shell
+winkyi@k8s-dev:~$ kubectl describe pod winkyi-httpserver-69dd4465df-l6kc6
+... ...
+    Restart Count:  0
+    Limits:
+      cpu:     1
+      memory:  500Mi
+    Requests:
+      cpu:        200m
+      memory:     200Mi
+... ...
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age    From               Message
+  ----    ------     ----   ----               -------
+  Normal  Scheduled  10m    default-scheduler  Successfully assigned default/winkyi-httpserver-69dd4465df-l6kc6 to k8s-dev
+  Normal  Pulled     10m    kubelet            Container image "winkyi/httpserver:v1.2" already present on machine
+  Normal  Created    10m    kubelet            Created container httpserver
+  Normal  Started    9m59s  kubelet            Started container httpserver
+... ...
+```
+
+>  查询Qos Class为Burstable
+
+
+
+### 4、 探活
+
+
+
+配置探活探针livenessProbe
+
+```yaml
+... ...
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 9999
+          initialDelaySeconds: 10
+          periodSeconds: 5
+... ....
+```
+
+
+
+### 5、 日志等级
+
+默认日志等级为3， 心跳检查日志等级配置为5
+
+```go
+// Index 主页
+func Index(c *Context) {
+	c.SetHeaders(c.R.Header)
+	c.SetEnvToResponseHeader("VERSION")
+	c.HTML(http.StatusOK, "<h1>Hello index</h1>")
+	c.StringNotCode("\n%q", c.W.Header())
+	c.Log(3, "访问了主页") // 访问的日志级别3
+}
+
+// Healthz
+func Healthz(c *Context) {
+	c.JSON(200, H{
+		"200": "connect ok",
+	})
+	c.Log(5, "发起了心跳")  // 心跳日志级别5
+}
+```
+
+
+
+配置了/healthz的livenessProbe，为了不让探针日志一直打印，yaml中设置服务启动日志级别为4，可根据需求在yaml文件中调整日志级别。
+
+```yaml
+... ...
+    spec:
+      terminationGracePeriodSeconds: 20  #grace period
+      containers:
+      - command:
+          - httpserver
+          - -v=4  # 日志级别
+          - -logtostderr
+          - -configfile=/config/app.ini
+... ...
+```
+
+
+
+### 6、 配置和代码分离
+
+
+
+代码中读取外置INI配置文件
+
+```go
+... ...
+	iniConf := engine.IniConfig{FilePath: configfile} // 加载外置配置
+	config, err := iniConf.Load()
+	if err != nil {
+		panic("can not load config")
+	}
+
+	app := &http.Server{
+		Addr:    config.(*ini.File).Section("server").Key("port").String(),  // 读取INI配置文件port配置值
+		Handler: r_app,
+	}
+... ...
+```
+
+
+
+配置configmap
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-httpserver
+data:
+  app.ini: |
+    version = 1.0.0
+
+    [server]
+    port = :9999
+```
+
+
+
+deployment的yaml配置挂载configmap
+
+```yaml
+... ...
+        volumeMounts:
+          - name: httpserverconf
+            mountPath: /config/  #挂载在/config文件夹内
+            readOnly: true
+      volumes:
+        -  name: httpserverconf
+           configMap:
+             name: cm-httpserver
+... ...
+```
+
+
+
+pod中查询configmap挂载情况
+
+```shell
+root@winkyi-httpserver-69dd4465df-l6kc6:/# mount | grep config
+/dev/vda1 on /config type ext4 (ro,relatime,errors=remount-ro,data=ordered)
+root@winkyi-httpserver-69dd4465df-l6kc6:~# cd /config/
+root@winkyi-httpserver-69dd4465df-l6kc6:/config# ls
+app.ini
+root@winkyi-httpserver-69dd4465df-l6kc6:/config# cat app.ini 
+version = 1.0.0
+
+[server]
+port = :9999
+```
+

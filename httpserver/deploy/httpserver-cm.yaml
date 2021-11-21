@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-httpserver
+data:
+  app.ini: |
+    version = 1.0.0
+
+    [server]
+    port = :9999

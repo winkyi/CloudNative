@@ -12,28 +12,49 @@ spec:
       labels:
         app: httpserver
     spec:
+      terminationGracePeriodSeconds: 20  #grace period
       containers:
-        - name: httpserver
-          image: winkyi/httpserver:v1.1
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 9999
-              name: app
-            - containerPort: 8001
-              name: pprof
-          readinessProbe:
-            httpGet:
-              path: /healthz
-              port: 9999
-            initialDelaySeconds: 10
-            periodSeconds: 5
-            successThreshold: 2
-          livenessProbe:
-            httpGet:
-              path: /healthz
-              port: 9999
-            initialDelaySeconds: 10
-            periodSeconds: 5
+      - command:
+          - httpserver
+          - -v=4
+          - -logtostderr
+          - -configfile=/config/app.ini
+        name: httpserver
+        image: winkyi/httpserver:v1.2
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 9999
+            name: app
+          - containerPort: 8001
+            name: pprof
+        resources:
+          limits:
+            memory: "500Mi"
+            cpu: "1"
+          requests:
+            memory: "200Mi"
+            cpu: "200m"
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 9999
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          successThreshold: 2
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 9999
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        volumeMounts:
+          - name: httpserverconf
+            mountPath: /config/
+            readOnly: true
+      volumes:
+        -  name: httpserverconf
+           configMap:
+             name: cm-httpserver
 ---
 kind: Service
 apiVersion: v1
