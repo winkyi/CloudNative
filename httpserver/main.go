@@ -5,6 +5,7 @@ import (
 	"flag"
 	"github.com/golang/glog"
 	"github.com/winkyi/CloudNative/httpserver/engine"
+	"github.com/winkyi/CloudNative/httpserver/metrics"
 	"gopkg.in/ini.v1"
 	"net/http"
 	_ "net/http/pprof"
@@ -18,11 +19,16 @@ func main() {
 	var configfile string
 	flag.Set("v", "4")
 	flag.StringVar(&configfile, "configfile", "httpserver/config/app.ini", "http server config.")
+	//flag.StringVar(&configfile, "configfile", "D:\\code\\go\\src\\github.com\\winkyi\\CloudNative\\httpserver\\config\\app.ini", "http server config.")
 	flag.Parse()
 	glog.V(2).Info("准备启动httpserver...")
+	metrics.Register()
 	r_app := engine.New()
 	r_app.GET("/", engine.Index)
 	r_app.GET("/healthz", engine.Healthz)
+	r_app.GET("/hello", engine.Hello)
+	// 注册prometheus handler
+	r_app.GET("/metrics", engine.PrometheusHandler())
 
 	iniConf := engine.IniConfig{FilePath: configfile}
 	config, err := iniConf.Load()

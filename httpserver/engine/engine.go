@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 )
 
@@ -29,6 +30,15 @@ func (e *engine) POST(pattern string, handler HandlerFunc) {
 // GET get请求
 func (e *engine) GET(pattern string, handler HandlerFunc) {
 	e.addRoute("GET", pattern, handler)
+}
+
+// PrometheusHandler 转换prometheus的handler为handlerFunc
+func PrometheusHandler() HandlerFunc {
+	h := promhttp.Handler()
+
+	return func(c *Context) {
+		h.ServeHTTP(c.W, c.R)
+	}
 }
 
 func (e *engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {

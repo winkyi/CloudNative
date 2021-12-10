@@ -11,6 +11,9 @@ spec:
     metadata:
       labels:
         app: httpserver
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: app
     spec:
       terminationGracePeriodSeconds: 20  #grace period
       containers:
