@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: service2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: serviceA
+  template:
+    metadata:
+      labels:
+        app: serviceA
+    spec:
+      containers:
+        - name: serviceA
+          imagePullPolicy: IfNotPresent
+          image: winkyi/serviceA:v1.0
+          ports:
+            - containerPort: 8088
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: serviceA
+spec:
+  ports:
+    - name: http-serviceA
+      port: 8088
+      protocol: TCP
+      targetPort: 8088
+  selector:
+    app: serviceA

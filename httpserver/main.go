@@ -27,14 +27,12 @@ func main() {
 	r_app.GET("/", engine.Index)
 	r_app.GET("/healthz", engine.Healthz)
 	r_app.GET("/hello", engine.Hello)
+	//调用serverA服务
+	r_app.GET("/serverA", engine.CallServerA)
 	// 注册prometheus handler
 	r_app.GET("/metrics", engine.PrometheusHandler())
 
-	iniConf := engine.IniConfig{FilePath: configfile}
-	config, err := iniConf.Load()
-	if err != nil {
-		panic("can not load config")
-	}
+	config := engine.InitConfig(configfile)
 
 	app := &http.Server{
 		Addr:    config.(*ini.File).Section("server").Key("port").String(),
