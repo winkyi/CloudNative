@@ -1,33 +1,33 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: service2
+  name: servicea
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: serviceA
+      app: servicea
   template:
     metadata:
       labels:
-        app: serviceA
+        app: servicea
     spec:
       containers:
-        - name: serviceA
+        - name: servicea
           imagePullPolicy: IfNotPresent
-          image: winkyi/serviceA:v1.0
+          image: winkyi/servicea:v1.0
           ports:
             - containerPort: 8088
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: serviceA
+  name: servicea
 spec:
   ports:
-    - name: http-serviceA
+    - name: http-servicea
       port: 8088
       protocol: TCP
       targetPort: 8088
   selector:
-    app: serviceA
+    app: servicea

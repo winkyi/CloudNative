@@ -9,4 +9,4 @@ build:
 
 release: build
 	echo "building service2 container"
-	docker build -t winkyi/servicA:${tag} .
+	docker build -t winkyi/servicea:${tag} .

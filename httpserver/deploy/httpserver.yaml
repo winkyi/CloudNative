@@ -23,7 +23,7 @@ spec:
           - -logtostderr
           - -configfile=/config/app.ini
         name: httpserver
-        image: winkyi/httpserver:v1.3
+        image: winkyi/httpserver:v1.4
         imagePullPolicy: IfNotPresent
         ports:
           - containerPort: 9999

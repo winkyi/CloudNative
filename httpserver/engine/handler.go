@@ -51,7 +51,7 @@ func CallServerA(c *Context) {
 	for k, v := range c.R.Header {
 		lowerHeader[strings.ToLower(k)] = v
 	}
-	c.Log(1, "headers:", lowerHeader)
+	c.Log(1, "headers: %q\n", lowerHeader)
 	req.Header = lowerHeader
 	client := &http.Client{}
 	resp, err := client.Do(req)
